@@ -1,0 +1,34 @@
+# Deploy site/ to GitHub Pages on every push to main.
+# One-time setup: repo Settings → Pages → Source → "GitHub Actions"
+# (or `gh api repos/{owner}/heatwave-2026/pages -X POST -f build_type=workflow`).
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}   # allow manual re-deploys from the Actions tab
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deploys at once; let an in-flight production deploy finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site   # the static site root — no build step needed
+      - id: deployment
+        uses: actions/deploy-pages@v4

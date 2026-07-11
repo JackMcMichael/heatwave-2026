@@ -1,0 +1,20 @@
+# Raw downloads are cached locally, never committed (see PLAN.md §3)
+data/raw/*
+!data/raw/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# DuckDB scratch files
+*.duckdb
+*.duckdb.wal
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

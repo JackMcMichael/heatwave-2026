@@ -1,0 +1,21 @@
+[project]
+name = "heatwave-2026-pipeline"
+version = "0.1.0"
+description = "Offline data pipeline for the June 2026 heatwave visualisation"
+requires-python = ">=3.10"
+dependencies = [
+    "cdsapi>=0.7.4",      # Copernicus CDS downloads (ERA5 daily statistics)
+    "requests>=2.31",     # Open-Meteo city series
+    "xarray>=2024.1",     # NetCDF handling (02_baseline.py onwards)
+    "netcdf4>=1.6",
+    "duckdb>=1.0",        # all aggregation logic lives in DuckDB SQL (03_aggregate.sql)
+    "pandas>=2.1",
+    "geopandas>=0.14",    # NUTS boundary prep for the spatial join
+    "shapely>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
