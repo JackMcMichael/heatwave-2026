@@ -61,10 +61,14 @@ def test_anomalies_in_sane_range(daily):
     Loire peaks at +18.9 °C on 23-24 June — consistent with the 44.3 °C
     Pissos record nearby, and with heat-dome events elsewhere (Pacific NW
     2021 reached ~+20 °C). Upper bound widened to +20 accordingly.
+
+    Cool swings overshoot too: Berlin (DE3) hit -5.7 on 6 July as the
+    post-heatwave pattern flipped, so the floor is -10 — still tight enough
+    to catch unit errors (K vs °C would be off by hundreds).
     """
     for rid, r in daily["regions"].items():
-        assert all(-5.0 <= a <= 20.0 for a in r["anomaly"]), \
-            f"{rid} anomaly outside [-5, +20]: {r['anomaly']}"
+        assert all(-10.0 <= a <= 20.0 for a in r["anomaly"]), \
+            f"{rid} anomaly outside [-10, +20]: {r['anomaly']}"
 
 
 def test_geojson_matches_data_regions(daily, regions_geojson):
@@ -87,6 +91,19 @@ def test_city_files_complete():
         # All five arrays are aligned: one normal per 2026 date.
         for key in ("tx", "tn", "clim_tx", "clim_tn"):
             assert len(c[key]) == n and None not in c[key], f"{f.name}.{key}"
+
+
+def test_frontend_asset_budgets():
+    """PLAN.md §6: our JS ≤ 50 KB (excl. MapLibre, which the CDN serves
+    gzipped at ~220 KB — total first load stays well under the 1.5 MB cap)."""
+    site = SITE_DATA.parent
+    js = sum(f.stat().st_size for f in (site / "js").glob("*.js"))
+    assert js <= 50_000, f"app JS {js} bytes exceeds 50 KB budget"
+    first_load = js + sum(
+        (site / n).stat().st_size
+        for n in ("index.html", "css/style.css",
+                  "data/daily_anomaly.json", "data/regions.geojson"))
+    assert first_load <= 500_000, f"own-asset first load {first_load} bytes"
 
 
 def test_events_have_required_fields():

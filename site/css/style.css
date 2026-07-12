@@ -83,7 +83,8 @@ header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
 
 /* ---- timeline bar ----------------------------------------------- */
 #timeline {
-  position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   width: min(680px, calc(100% - 1.5rem));
   background: var(--surface);
   border: 1px solid #333a4d;
@@ -103,7 +104,11 @@ header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
 #play-btn:hover { background: #303650; }
 
 .slider-wrap { position: relative; flex: 1; }
-#date-slider { width: 100%; accent-color: var(--accent); }
+#date-slider {
+  width: 100%; accent-color: var(--accent); cursor: pointer;
+  height: 1.4rem; /* generous hit target for touch scrubbing */
+  touch-action: none; /* the thumb, not the page, owns horizontal drags */
+}
 
 #event-dots { position: absolute; left: 8px; right: 8px; top: -6px; height: 6px; pointer-events: none; }
 .event-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; transform: translateX(-50%); }
@@ -170,13 +175,39 @@ footer {
 }
 footer a { color: var(--muted); }
 
-/* ---- mobile (basic; Phase 4 refines) ------------------------------ */
+/* ---- touch devices ------------------------------------------------ */
+@media (pointer: coarse) {
+  #play-btn { width: 2.8rem; height: 2.8rem; font-size: 1.05rem; }
+  #panel-close, #info-close { padding: 0.5rem; } /* ≥44px effective target */
+}
+
+/* ---- mobile: panel becomes a bottom sheet ------------------------- */
 @media (max-width: 640px) {
   #legend { display: none; }
-  #panel { top: auto; bottom: 9.5rem; right: 0.75rem; left: 0.75rem; width: auto; max-height: 45vh; }
-  #date-label { min-width: 7rem; font-size: 0.78rem; }
+  header h1 { font-size: 1rem; }
+  #info-btn { display: block; margin: 0.35rem 0 0; }
+
+  #panel {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto;
+    max-height: 58vh;
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-bottom: none;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    z-index: 20; /* sheet slides over the timeline while open */
+    box-shadow: 0 -6px 30px rgba(0,0,0,0.6);
+  }
+  /* drag-handle affordance */
+  #panel::before {
+    content: ""; display: block; width: 2.4rem; height: 4px;
+    margin: -0.35rem auto 0.6rem; border-radius: 2px; background: #444c63;
+  }
+
+  #event-card { top: auto; bottom: 8.6rem; font-size: 0.82rem; }
+  #timeline { padding: 0.55rem 0.8rem 0.7rem; }
+  #date-label { min-width: 6.5rem; font-size: 0.78rem; }
+  .modal-card { padding: 1.1rem 1rem; max-height: 92vh; font-size: 0.88rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  * { transition: none !important; animation: none !important; }
 }

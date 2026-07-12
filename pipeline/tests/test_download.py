@@ -54,7 +54,9 @@ def test_only_current_month_jobs_refresh():
 
 def test_every_city_has_event_and_baseline_job():
     jobs = download.city_jobs()
-    assert len(jobs) == 2 * len(download.CITIES)
+    # One job per (city, covered event month) plus one whole-year baseline.
+    per_city = len(download.event_months()) + 1
+    assert len(jobs) == per_city * len(download.CITIES)
 
 
 def test_dry_run_exits_cleanly(capsys):

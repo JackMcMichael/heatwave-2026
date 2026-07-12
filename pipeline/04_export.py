@@ -46,21 +46,39 @@ SIMPLIFY_TOLERANCE_DEG = 0.01
 # Timeline markers. Record values are PROVISIONAL (Met Office verification
 # ongoing as of July 2026) — re-verify against primary sources in Phase 5
 # before publishing; entries with "date": null still need their date sourced.
+# Verified 2026-07-12 against Met Office news/blog, Météo-France (via press),
+# UKHSA/GOV.UK and Euronews/Copernicus reporting — links in SOURCES.md.
 EVENTS = [
-    {"date": "2026-06-23", "country": "FR", "title": "France's hottest day on record",
-     "detail": "44.3°C at Pissos, Landes", "provisional": True},
-    {"date": "2026-06-24", "country": "UK", "title": "First of three consecutive Met Office red heat warnings",
-     "detail": "Red warnings issued 24–26 June — a first since the system began", "provisional": True},
-    {"date": "2026-06-26", "country": "UK", "title": "Provisional UK June record",
-     "detail": "37.7°C at Lingwood, Norfolk", "provisional": True},
+    {"date": "2026-06-23", "country": "FR",
+     "title": "France's hottest day since records began (1947)",
+     "detail": "44.3°C at Pissos, Landes; Paris sets a June record of 40.9°C",
+     "provisional": False},
+    {"date": "2026-06-24", "country": "UK",
+     "title": "Red heat warnings begin",
+     "detail": "Met Office red extreme-heat warning; UKHSA red heat-health "
+               "alerts across six English regions",
+     "provisional": False},
+    {"date": "2026-06-25", "country": "UK",
+     "title": "Wales June record; UK's warmest June night",
+     "detail": "35.9°C at Cardiff Bute Park, which also stays above 23.5°C "
+               "overnight — a UK June record",
+     "provisional": True},
+    {"date": "2026-06-26", "country": "UK",
+     "title": "England & UK June record",
+     "detail": "37.7°C at Lingwood, Norfolk (previous record 35.6°C, 1976). "
+               "A record third consecutive red warning day; London Ambulance "
+               "Service logs its busiest day ever",
+     "provisional": True},
+    {"date": "2026-06-27", "country": "DE",
+     "title": "Records sweep east",
+     "detail": "Germany sets an all-time national high; Germany, Czechia, "
+               "Poland and Hungary all log their hottest days on record "
+               "within ~24 hours",
+     "provisional": True},
     {"date": None, "country": "NL", "title": "Netherlands June record",
      "detail": "39.4°C", "provisional": True},
     {"date": None, "country": "CH", "title": "Switzerland June record",
-     "detail": "39.0°C", "provisional": True},
-    {"date": None, "country": "HU", "title": "Hungary June record",
-     "detail": "40.7°C", "provisional": True},
-    {"date": None, "country": "AT", "title": "Austria June record",
-     "detail": "40.0°C", "provisional": True},
+     "detail": "39.0°C at Basel", "provisional": True},
 ]
 
 

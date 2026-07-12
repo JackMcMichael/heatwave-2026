@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#12141c">
   <title>Attributions — Anatomy of a Heatwave</title>
   <style>
     :root { color-scheme: dark; }
@@ -10,35 +11,66 @@
            max-width: 42rem; margin: 0 auto; padding: 2rem 1.2rem; line-height: 1.6; }
     a { color: #ef8a62; }
     h1 { font-size: 1.4rem; }
-    h2 { font-size: 1rem; margin-top: 1.6rem; }
+    h2 { font-size: 1rem; margin-top: 1.8rem; }
     blockquote { border-left: 3px solid #444c63; margin: 0.5rem 0; padding: 0.2rem 0.9rem;
                  color: #9aa3b2; font-size: 0.9rem; }
+    p, li { font-size: 0.92rem; }
+    .small { color: #9aa3b2; font-size: 0.82rem; }
   </style>
 </head>
 <body>
-  <h1>Data sources &amp; attributions</h1>
+  <h1>Data sources, licences &amp; attributions</h1>
   <p><a href="index.html">← back to the map</a></p>
 
-  <h2>ERA5 reanalysis (Copernicus Climate Data Store)</h2>
-  <p>Gridded daily maximum/minimum 2 m temperature and the 1991–2020 baseline.</p>
-  <blockquote>Contains modified Copernicus Climate Change Service information [2026].
-  Neither the European Commission nor ECMWF is responsible for any use of this
-  information.</blockquote>
+  <h2>ERA5 reanalysis — Copernicus Climate Change Service (C3S)</h2>
+  <p>Gridded daily maximum/minimum 2&nbsp;m temperature (post-processed daily
+  statistics dataset) for June 2026 onwards and the 1991–2020 monthly
+  baselines. Retrieved via the Climate Data Store, 10–12 July 2026, under the
+  <a href="https://cds.climate.copernicus.eu/licence-to-use-copernicus-products">Licence
+  to use Copernicus Products</a>. Required acknowledgement:</p>
+  <blockquote>Contains modified Copernicus Climate Change Service information
+  [2026]. Neither the European Commission nor ECMWF is responsible for any use
+  of this information.</blockquote>
+  <p class="small">Citation: Hersbach, H. et al. (2020): The ERA5 global
+  reanalysis. Q J R Meteorol Soc. Data via the Copernicus Climate Data Store.</p>
 
-  <h2>Open-Meteo</h2>
-  <p>Per-city daily temperature series (Historical Weather API), CC BY 4.0.</p>
+  <h2>Open-Meteo Historical Weather API</h2>
+  <p>Per-city daily temperature series and 1991–2020 city normals. Retrieved
+  10–12 July 2026. Licensed
+  <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>,
+  free for non-commercial use.</p>
   <blockquote>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a></blockquote>
+  <p class="small">Open-Meteo's historical archive is itself built on ERA5 and
+  national weather model reanalyses.</p>
 
-  <h2>Region boundaries</h2>
-  <p>NUTS 2021 statistical regions, Eurostat/GISCO.</p>
+  <h2>Region boundaries — Eurostat/GISCO, NUTS 2021</h2>
+  <p>NUTS level-1 statistical regions, 1:20M generalised GeoJSON, retrieved
+  12 July 2026 from
+  <a href="https://ec.europa.eu/eurostat/web/gisco">GISCO</a>. Geometry
+  simplified further for the web. Use of these boundaries requires:</p>
   <blockquote>© EuroGeographics for the administrative boundaries</blockquote>
 
-  <h2>Software</h2>
-  <p>Map rendering by <a href="https://maplibre.org/">MapLibre GL JS</a> (BSD-3-Clause).
-  Pipeline: Python, xarray, DuckDB.</p>
+  <h2>Event markers &amp; written analysis</h2>
+  <p>Record values and warning dates summarise public announcements by the
+  <a href="https://www.metoffice.gov.uk/blog/2026/june-2026-heatwave-a-recap-of-the-temperature-records">Met
+  Office</a> (© Crown copyright, used under the
+  <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/">Open
+  Government Licence v3.0</a>),
+  <a href="https://www.gov.uk/government/news/ukhsa-issues-red-heat-health-alerts-across-england">UKHSA</a>
+  (OGL v3.0), Météo-France as reported by international press, and the
+  <a href="https://www.worldweatherattribution.org/">World Weather
+  Attribution</a> initiative. UK national records are provisional pending Met
+  Office verification.</p>
 
-  <p style="color:#9aa3b2; font-size:0.85rem; margin-top:2rem">
-  Record figures are provisional pending national verification; see event
-  markers. This page will be expanded with full licence texts (Phase 5).</p>
+  <h2>Software</h2>
+  <p>Map rendering by <a href="https://maplibre.org/">MapLibre GL JS</a>
+  (BSD-3-Clause). Offline pipeline: Python, xarray (Apache-2.0),
+  <a href="https://duckdb.org/">DuckDB</a> (MIT), GeoPandas (BSD-3-Clause).
+  Colour scale derived from ColorBrewer RdBu
+  (<a href="https://colorbrewer2.org/">colorbrewer2.org</a>, Apache-2.0).</p>
+
+  <p class="small">This site's full source code and reproducible data pipeline
+  are available in the project repository. No cookies, no analytics, no
+  tracking.</p>
 </body>
 </html>
