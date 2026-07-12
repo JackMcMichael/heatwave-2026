@@ -4,7 +4,7 @@ Interactive climate analytics portfolio piece. Animated map + timeline of the Ju
 European heatwave, with pre-aggregated data built by a Python/SQL pipeline and served as a
 static site on GitHub Pages.
 
-**Author:** Jackie · Climate Data & Analytics
+**Author:** Jack McMichael · Climate Analytics
 **Intended workflow:** This document is the brief for a Claude Code session. Work through the
 phases in order; each phase has acceptance criteria.
 
