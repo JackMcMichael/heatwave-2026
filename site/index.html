@@ -5,36 +5,65 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Anatomy of a Heatwave — June 2026</title>
   <meta name="description"
-        content="Interactive map and timeline of the June 2026 UK and European heatwave.">
-  <style>
-    /* Placeholder page for Phase 0 — replaced by the MapLibre app in Phase 3. */
-    :root { color-scheme: dark; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: linear-gradient(160deg, #1a1a2e 0%, #4a1c1c 60%, #8a2c0c 100%);
-      color: #f5ede4;
-      text-align: center;
-    }
-    main { padding: 2rem; max-width: 34rem; }
-    h1 { font-size: clamp(1.6rem, 5vw, 2.4rem); margin-bottom: 0.4rem; }
-    .dates { font-variant-numeric: tabular-nums; opacity: 0.85; }
-    .badge {
-      display: inline-block; margin-top: 1.4rem; padding: 0.35rem 0.9rem;
-      border: 1px solid #f5ede455; border-radius: 999px;
-      font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase;
-    }
-  </style>
+        content="Interactive map and timeline of the June 2026 UK and European heatwave: daily temperature anomalies vs the 1991–2020 baseline.">
+
+  <!-- MapLibre GL JS (BSD). Pinned; bump deliberately, not automatically. -->
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" defer></script>
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preload" href="data/daily_anomaly.json" as="fetch" crossorigin>
+  <link rel="preload" href="data/regions.geojson" as="fetch" crossorigin>
 </head>
 <body>
-  <main>
+  <div id="map" aria-label="Map of Europe showing daily maximum temperature anomalies"></div>
+
+  <header>
     <h1>Anatomy of a Heatwave</h1>
-    <p class="dates">United Kingdom &amp; Europe · 17–30 June 2026</p>
-    <p>An interactive map and timeline of daily temperature anomalies is being built here.</p>
-    <span class="badge">Under construction</span>
-  </main>
+    <p>UK &amp; Europe, 17–30 June 2026 · daily max temperature anomaly vs June 1991–2020</p>
+  </header>
+
+  <div id="legend" aria-hidden="true">
+    Anomaly vs June normal (°C)
+    <div class="bar"></div>
+    <div class="ticks"><span>−5</span><span>0</span><span>+8</span><span>+14</span><span>+20</span></div>
+  </div>
+
+  <aside id="panel" hidden>
+    <button id="panel-close" aria-label="Close panel">✕</button>
+    <h2 id="panel-title"></h2>
+    <p id="panel-stats"></p>
+    <h3>Daily anomaly, 17–30 June</h3>
+    <canvas id="region-canvas"></canvas>
+    <div id="city-section" hidden>
+      <h3 id="city-title"></h3>
+      <canvas id="city-canvas"></canvas>
+      <p id="tropical-count"></p>
+    </div>
+  </aside>
+
+  <div id="timeline">
+    <div class="timeline-row">
+      <button id="play-btn" aria-label="Play">▶</button>
+      <div class="slider-wrap">
+        <div id="event-dots"></div>
+        <input id="date-slider" type="range" min="0" max="13" value="0" step="1"
+               aria-label="Timeline date">
+      </div>
+      <span id="date-label"></span>
+    </div>
+    <div id="event-card" hidden></div>
+  </div>
+
+  <footer>
+    Contains modified Copernicus Climate Change Service information [2026] ·
+    Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a> ·
+    © EuroGeographics · <a href="attributions.html">Full attributions</a>
+  </footer>
+
+  <!-- Wait for the deferred MapLibre script, then boot the module app. -->
+  <script type="module">
+    window.addEventListener("DOMContentLoaded", () => import("./js/app.js"));
+  </script>
 </body>
 </html>

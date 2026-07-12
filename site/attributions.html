@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attributions — Anatomy of a Heatwave</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: system-ui, sans-serif; background: #12141c; color: #f5ede4;
+           max-width: 42rem; margin: 0 auto; padding: 2rem 1.2rem; line-height: 1.6; }
+    a { color: #ef8a62; }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1rem; margin-top: 1.6rem; }
+    blockquote { border-left: 3px solid #444c63; margin: 0.5rem 0; padding: 0.2rem 0.9rem;
+                 color: #9aa3b2; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Data sources &amp; attributions</h1>
+  <p><a href="index.html">← back to the map</a></p>
+
+  <h2>ERA5 reanalysis (Copernicus Climate Data Store)</h2>
+  <p>Gridded daily maximum/minimum 2 m temperature and the 1991–2020 baseline.</p>
+  <blockquote>Contains modified Copernicus Climate Change Service information [2026].
+  Neither the European Commission nor ECMWF is responsible for any use of this
+  information.</blockquote>
+
+  <h2>Open-Meteo</h2>
+  <p>Per-city daily temperature series (Historical Weather API), CC BY 4.0.</p>
+  <blockquote>Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a></blockquote>
+
+  <h2>Region boundaries</h2>
+  <p>NUTS 2021 statistical regions, Eurostat/GISCO.</p>
+  <blockquote>© EuroGeographics for the administrative boundaries</blockquote>
+
+  <h2>Software</h2>
+  <p>Map rendering by <a href="https://maplibre.org/">MapLibre GL JS</a> (BSD-3-Clause).
+  Pipeline: Python, xarray, DuckDB.</p>
+
+  <p style="color:#9aa3b2; font-size:0.85rem; margin-top:2rem">
+  Record figures are provisional pending national verification; see event
+  markers. This page will be expanded with full licence texts (Phase 5).</p>
+</body>
+</html>

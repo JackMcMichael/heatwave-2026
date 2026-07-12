@@ -1,0 +1,134 @@
+/* Anatomy of a Heatwave — dark, map-first layout.
+ * Map is full-bleed; timeline docks at the bottom; the detail panel overlays
+ * on the right (desktop) or as a bottom sheet (mobile, refined in Phase 4). */
+
+:root {
+  color-scheme: dark;
+  --bg: #12141c;
+  --surface: #1c1f2b;
+  --surface-2: #262a3a;
+  --text: #f5ede4;
+  --muted: #9aa3b2;
+  --accent: #ef8a62;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+#map { position: fixed; inset: 0; }
+
+.load-error { padding: 2rem; color: var(--accent); }
+
+/* ---- header ---------------------------------------------------- */
+header {
+  position: fixed; top: 0; left: 0; right: 0;
+  padding: 0.9rem 1.2rem;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(18,20,28,0.9), transparent);
+  z-index: 5;
+}
+header h1 { margin: 0; font-size: 1.15rem; }
+header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
+
+/* ---- timeline bar ----------------------------------------------- */
+#timeline {
+  position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
+  width: min(680px, calc(100% - 1.5rem));
+  background: var(--surface);
+  border: 1px solid #333a4d;
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem 0.9rem;
+  z-index: 10;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+.timeline-row { display: flex; align-items: center; gap: 0.8rem; }
+
+#play-btn {
+  width: 2.2rem; height: 2.2rem; flex: none;
+  border-radius: 50%; border: 1px solid #444c63;
+  background: var(--surface-2); color: var(--text);
+  font-size: 0.9rem; cursor: pointer;
+}
+#play-btn:hover { background: #303650; }
+
+.slider-wrap { position: relative; flex: 1; }
+#date-slider { width: 100%; accent-color: var(--accent); }
+
+#event-dots { position: absolute; left: 8px; right: 8px; top: -6px; height: 6px; pointer-events: none; }
+.event-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; transform: translateX(-50%); }
+.event-dot.has-event { background: var(--accent); }
+
+#date-label {
+  min-width: 9.5rem; text-align: right;
+  font-variant-numeric: tabular-nums; font-size: 0.9rem;
+}
+
+#event-card {
+  margin-top: 0.6rem; padding: 0.5rem 0.7rem;
+  background: var(--surface-2); border-left: 3px solid var(--accent);
+  border-radius: 4px; font-size: 0.82rem;
+}
+#event-card .prov { color: var(--muted); font-size: 0.72rem; margin-left: 0.4rem; }
+#event-card hr { border: none; border-top: 1px solid #3a4155; margin: 0.4rem 0; }
+
+/* ---- legend ------------------------------------------------------ */
+#legend {
+  position: fixed; top: 4.2rem; left: 1rem; z-index: 5;
+  background: var(--surface); border: 1px solid #333a4d;
+  border-radius: var(--radius); padding: 0.55rem 0.8rem;
+  font-size: 0.72rem; color: var(--muted);
+}
+#legend .bar {
+  width: 150px; height: 10px; border-radius: 5px; margin: 0.3rem 0;
+  background: linear-gradient(to right,
+    #2166ac 0%, #67a9cf 12%, #f7f7f7 20%,
+    #fddbc7 36%, #ef8a62 52%, #d6604d 68%, #b2182b 84%, #67001f 100%);
+}
+#legend .ticks { display: flex; justify-content: space-between; }
+
+/* ---- detail panel ------------------------------------------------ */
+#panel {
+  position: fixed; top: 4.2rem; right: 1rem; z-index: 10;
+  width: min(340px, calc(100% - 2rem));
+  max-height: calc(100vh - 12rem); overflow-y: auto;
+  background: var(--surface); border: 1px solid #333a4d;
+  border-radius: var(--radius); padding: 1rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+#panel h2 { margin: 0 1.5rem 0.4rem 0; font-size: 1rem; }
+#panel-close {
+  position: absolute; top: 0.6rem; right: 0.6rem;
+  border: none; background: none; color: var(--muted);
+  font-size: 1.1rem; cursor: pointer;
+}
+#panel-stats { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
+#panel-stats .big { color: var(--accent); font-size: 1.3rem; font-weight: 700; }
+#panel h3 { font-size: 0.8rem; margin: 1rem 0 0.3rem; color: var(--muted); }
+#panel canvas { width: 100%; height: 110px; }
+#tropical-count { font-size: 0.75rem; color: var(--muted); margin: 0.2rem 0 0; }
+
+/* ---- footer credits ---------------------------------------------- */
+footer {
+  position: fixed; right: 0.6rem; bottom: 0.2rem; z-index: 4;
+  font-size: 0.62rem; color: var(--muted); text-align: right;
+}
+footer a { color: var(--muted); }
+
+/* ---- mobile (basic; Phase 4 refines) ------------------------------ */
+@media (max-width: 640px) {
+  #legend { display: none; }
+  #panel { top: auto; bottom: 9.5rem; right: 0.75rem; left: 0.75rem; width: auto; max-height: 45vh; }
+  #date-label { min-width: 7rem; font-size: 0.78rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
