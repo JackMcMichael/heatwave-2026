@@ -32,6 +32,9 @@ def regions_geojson():
 def test_timeline_starts_17_june_and_is_contiguous(daily):
     """Rolling timeline: fixed start, contiguous daily steps, ≥ the original
     14-day story, ending wherever the newest ERA5 day is."""
+    # Plain calendar dates only — a timestamp here (2026-06-17T00:00:00)
+    # would silently break the frontend's event matching.
+    assert all(len(d) == 10 for d in daily["dates"]), daily["dates"][0]
     dates = [date.fromisoformat(d) for d in daily["dates"]]
     assert dates[0].isoformat() == TIMELINE_START
     assert len(dates) >= 14

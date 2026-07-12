@@ -29,7 +29,8 @@ async function fetchJson(url) {
 /* ------------------------------------------------------------------ */
 function renderEvents() {
   const el = document.getElementById("event-card");
-  const today = state.daily.dates[state.index];
+  // slice(0,10): tolerate either "2026-06-23" or a full timestamp form.
+  const today = String(state.daily.dates[state.index]).slice(0, 10);
   const todays = state.events.filter((e) => e.date === today);
   el.hidden = todays.length === 0;
   el.innerHTML = todays.map((e) => `

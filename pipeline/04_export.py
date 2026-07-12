@@ -93,8 +93,10 @@ def export_daily_anomaly(con) -> set[str]:
     The timeline end isn't fixed: it's whatever the newest date in
     region_daily is, so re-running the pipeline extends the site's slider.
     """
+    # ::DATE matters: the parquet date column is a timestamp, and exporting
+    # "2026-06-17T00:00:00" would break the frontend's event-date matching.
     timeline = [d for (d,) in con.execute(
-        "SELECT DISTINCT date FROM region_daily WHERE date >= ? ORDER BY date",
+        "SELECT DISTINCT date::DATE FROM region_daily WHERE date >= ? ORDER BY date",
         [TIMELINE_START]).fetchall()]
     rows = con.execute(
         """
@@ -170,9 +172,15 @@ def export_cities(con) -> None:
             JOIN city_clim c ON c.city = d.city
                             AND c.month = month(d.date)
                             AND c.day = day(d.date)
-            WHERE d.city = ?
+            -- Open-Meteo lags real time by a few days: requested-but-not-yet-
+            -- published days come back as nulls. Drop them; the next refresh
+            -- fills them in.
+            WHERE d.city = ? AND d.tx IS NOT NULL AND d.tn IS NOT NULL
             ORDER BY d.date
             """, [city]).fetchall()
+        if not rows:  # defensive: never let one city kill the whole export
+            log.warning("no complete days for city %r — skipped", city)
+            continue
         dates, tx, tn, clim_tx, clim_tn = map(list, zip(*rows))
 
         write_json(SITE_DATA / "cities" / f"{city}.json", {
