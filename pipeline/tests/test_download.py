@@ -29,14 +29,27 @@ def test_bbox_is_valid_cds_order():
 
 def test_era5_requests_cover_event_and_baseline():
     jobs = download.era5_jobs()
-    # {TX, TN} x {2026 + each baseline year}; one year per request because
-    # the dataset's per-request cost cap rejects multi-year pulls.
-    assert len(jobs) == 2 * (1 + len(download.BASELINE_YEARS))
+    months = download.event_months()
+    # {TX, TN} x {each covered month} x {2026 + each baseline year}; one
+    # (year, month) per request because of the dataset's per-request cost cap.
+    assert len(jobs) == 2 * len(months) * (1 + len(download.BASELINE_YEARS))
     assert all(len(j.request["year"]) == 1 for j in jobs)
     years = {yr for j in jobs for yr in j.request["year"]}
     assert {"2026", "1991", "2020"} <= years
-    assert all(j.request["month"] == ["06"] for j in jobs)
-    assert all(len(j.request["day"]) == 30 for j in jobs)
+    assert {m for j in jobs for m in j.request["month"]} == \
+        {m for m, _, _ in months}
+
+
+def test_only_current_month_jobs_refresh():
+    """The still-accumulating month re-downloads; history stays cached."""
+    latest = download.latest_available_date()
+    current = f"{download.EVENT_YEAR}-{latest.month:02d}"
+    for j in download.era5_jobs() + download.city_jobs():
+        # refresh flag ⇔ the job targets the current partial month
+        assert j.refresh == j.target.stem.endswith(current), j.name
+    partial_days = [days for _, days, partial in download.event_months()
+                    if partial][0]
+    assert partial_days[-1] == f"{latest.day:02d}"
 
 
 def test_every_city_has_event_and_baseline_job():

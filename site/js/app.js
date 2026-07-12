@@ -48,7 +48,7 @@ async function openPanel(props) {
   panel.hidden = false;
   document.getElementById("panel-title").textContent = props.name;
 
-  drawRegionBars(region);
+  drawRegionBars(region, state.daily.dates);
   updatePanelStats(region);
 
   const cityEl = document.getElementById("city-section");
@@ -75,8 +75,8 @@ function updatePanelStats(region) {
      · tropical nights across ${region.tropical[i]}% of region`;
 }
 
-/* 14-day anomaly bars for the clicked region (always available). */
-function drawRegionBars(region) {
+/* Whole-timeline anomaly bars for the clicked region (always available). */
+function drawRegionBars(region, dates) {
   const canvas = document.getElementById("region-canvas");
   const ctx = setupCanvas(canvas);
   const { width: W, height: H } = canvas.getBoundingClientRect();
@@ -91,9 +91,10 @@ function drawRegionBars(region) {
   });
   ctx.strokeStyle = "#555";
   ctx.beginPath(); ctx.moveTo(0, zero); ctx.lineTo(W, zero); ctx.stroke();
+  const short = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
   ctx.fillStyle = "#9aa"; ctx.font = "11px system-ui";
-  ctx.fillText("17 Jun", 4, H - 4);
-  ctx.fillText("30 Jun", W - 42, H - 4);
+  ctx.fillText(short.format(new Date(dates[0])), 4, H - 4);
+  ctx.fillText(short.format(new Date(dates.at(-1))), W - 42, H - 4);
 }
 
 /* June 2026 max/min vs climatology for the region's city. */
@@ -152,6 +153,12 @@ async function main() {
   state.daily = daily;
   state.events = events;
 
+  // Subtitle reflects however far the rolling timeline currently reaches.
+  const fmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long" });
+  document.getElementById("subtitle").textContent =
+    `UK & Europe · 17 June – ${fmt.format(new Date(daily.dates.at(-1)))} 2026 · ` +
+    "daily max temperature anomaly vs 1991–2020";
+
   const { ready, setDate } = createMap({
     container: "map",
     regionsUrl: "data/regions.geojson",
@@ -173,6 +180,19 @@ async function main() {
   document.getElementById("panel-close").addEventListener("click", () => {
     document.getElementById("panel").hidden = true;
     state.region = null;
+  });
+
+  // "About this map" modal: button, ✕, backdrop click, or Escape.
+  const modal = document.getElementById("info-modal");
+  document.getElementById("info-btn").addEventListener("click", () => {
+    modal.hidden = false;
+    document.getElementById("info-close").focus();
+  });
+  const closeModal = () => { modal.hidden = true; };
+  document.getElementById("info-close").addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modal.hidden) closeModal();
   });
 }
 

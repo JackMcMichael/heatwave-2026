@@ -38,6 +38,49 @@ header {
 header h1 { margin: 0; font-size: 1.15rem; }
 header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
 
+/* header has pointer-events:none so the map stays draggable beneath it;
+ * the info button opts back in. */
+#info-btn {
+  pointer-events: auto;
+  margin-left: 0.6rem; padding: 0.2rem 0.65rem;
+  vertical-align: 2px;
+  font-size: 0.72rem; letter-spacing: 0.02em;
+  color: var(--text); background: var(--surface-2);
+  border: 1px solid #444c63; border-radius: 999px; cursor: pointer;
+}
+#info-btn:hover { background: #303650; }
+
+/* ---- info modal -------------------------------------------------- */
+#info-modal {
+  position: fixed; inset: 0; z-index: 30;
+  background: rgba(10, 12, 18, 0.7);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+#info-modal[hidden] { display: none; }
+.modal-card {
+  position: relative;
+  max-width: 44rem; max-height: 86vh; overflow-y: auto;
+  background: var(--surface); border: 1px solid #333a4d;
+  border-radius: var(--radius); padding: 1.6rem 1.8rem;
+  line-height: 1.6; font-size: 0.92rem;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.modal-card h2 { margin-top: 0; font-size: 1.2rem; }
+.modal-card h3 { font-size: 0.95rem; margin: 1.3rem 0 0.3rem; color: var(--accent); }
+.modal-card p { margin: 0.5rem 0; color: #d9d2c7; }
+.modal-card a { color: var(--accent); }
+.modal-card .modal-foot {
+  margin-top: 1.4rem; padding-top: 0.8rem; border-top: 1px solid #333a4d;
+  font-size: 0.78rem; color: var(--muted);
+}
+#info-close {
+  position: absolute; top: 0.8rem; right: 0.9rem;
+  border: none; background: none; color: var(--muted);
+  font-size: 1.15rem; cursor: pointer;
+}
+#info-close:hover { color: var(--text); }
+
 /* ---- timeline bar ----------------------------------------------- */
 #timeline {
   position: fixed; left: 50%; bottom: 1rem; transform: translateX(-50%);
@@ -71,10 +114,15 @@ header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
   font-variant-numeric: tabular-nums; font-size: 0.9rem;
 }
 
+/* Event facts float over the map, clear of the timeline and panel. */
 #event-card {
-  margin-top: 0.6rem; padding: 0.5rem 0.7rem;
-  background: var(--surface-2); border-left: 3px solid var(--accent);
-  border-radius: 4px; font-size: 0.82rem;
+  position: fixed; left: 50%; top: 4.6rem; transform: translateX(-50%);
+  z-index: 8; width: min(440px, calc(100% - 1.5rem));
+  padding: 0.7rem 1rem;
+  background: var(--surface); border: 1px solid #333a4d;
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius); font-size: 0.9rem; line-height: 1.45;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
 }
 #event-card .prov { color: var(--muted); font-size: 0.72rem; margin-left: 0.4rem; }
 #event-card hr { border: none; border-top: 1px solid #3a4155; margin: 0.4rem 0; }

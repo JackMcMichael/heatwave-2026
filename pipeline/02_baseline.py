@@ -54,7 +54,9 @@ def convert_era5_to_parquet(force: bool) -> None:
     for nc in nc_files:
         stat = nc.stem.split("_")[0]  # "tx" or "tn"
         out = INTERIM / "era5" / stat / f"{nc.stem}.parquet"
-        if out.exists() and not force:
+        # mtime-aware: the current month's NetCDF is re-downloaded on every
+        # 01_download.py run, so its parquet must be rebuilt when it's older.
+        if out.exists() and not force and out.stat().st_mtime >= nc.stat().st_mtime:
             continue
         out.parent.mkdir(parents=True, exist_ok=True)
 

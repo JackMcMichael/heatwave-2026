@@ -33,8 +33,9 @@ NUTS_FILE = (REPO_ROOT / "data" / "raw" / "nuts"
              / "NUTS_RG_20M_2021_4326_LEVL_1.geojson")
 SITE_DATA = REPO_ROOT / "site" / "data"
 
-# The visualisation's timeline (PLAN.md §1): 14 daily steps.
-TIMELINE = [date(2026, 6, 17) + timedelta(days=i) for i in range(14)]
+# Rolling timeline: 17 June 2026 through the newest day in the data.
+# The end date is discovered from region_daily at export time.
+TIMELINE_START = date(2026, 6, 17)
 
 BUDGET = {"regions.geojson": 500_000, "daily_anomaly.json": 300_000}
 
@@ -87,7 +88,14 @@ def write_json(path: Path, payload) -> int:
 
 
 def export_daily_anomaly(con) -> set[str]:
-    """Region × date matrix, arrays aligned with the shared date list."""
+    """Region × date matrix, arrays aligned with the shared date list.
+
+    The timeline end isn't fixed: it's whatever the newest date in
+    region_daily is, so re-running the pipeline extends the site's slider.
+    """
+    timeline = [d for (d,) in con.execute(
+        "SELECT DISTINCT date FROM region_daily WHERE date >= ? ORDER BY date",
+        [TIMELINE_START]).fetchall()]
     rows = con.execute(
         """
         SELECT region_id, any_value(region_name), any_value(country),
@@ -96,16 +104,16 @@ def export_daily_anomaly(con) -> set[str]:
                list(tx_max_c    ORDER BY date) AS tx_maxes,
                list(tropical_pct ORDER BY date) AS tropical
         FROM region_daily
-        WHERE date BETWEEN ? AND ?
+        WHERE date >= ?
         GROUP BY region_id
         ORDER BY region_id
         """,
-        [TIMELINE[0], TIMELINE[-1]],
+        [TIMELINE_START],
     ).fetchall()
 
     payload = {
-        "dates": [d.isoformat() for d in TIMELINE],
-        "baseline": "June 1991-2020 (ERA5)",
+        "dates": [d.isoformat() for d in timeline],
+        "baseline": "1991-2020 monthly normals (ERA5)",
         "regions": {
             rid: {"name": name, "country": country,
                   "anomaly": anom, "tx": tx, "tx_max": txx, "tropical": trop}
@@ -145,25 +153,35 @@ def export_regions_geojson(region_ids: set[str]) -> None:
 
 
 def export_cities(con) -> None:
-    """One lazy-loadable file per city: 2026 series + day-of-month normals."""
+    """One lazy-loadable file per city: 2026 series + aligned normals.
+
+    Normals are joined per (month, day) so every 2026 date — whichever month
+    the rolling timeline has reached — sits next to its own normal, and all
+    five arrays share the same length and order.
+    """
     cities = [c for (c,) in con.execute(
         "SELECT DISTINCT city FROM city_daily ORDER BY city").fetchall()]
 
     for city in cities:
-        dates, tx, tn = zip(*con.execute(
-            "SELECT date, tx, tn FROM city_daily WHERE city = ? ORDER BY date",
-            [city]).fetchall())
-        clim = con.execute(
-            "SELECT clim_tx, clim_tn FROM city_clim WHERE city = ? ORDER BY day",
-            [city]).fetchall()
+        rows = con.execute(
+            """
+            SELECT d.date, d.tx, d.tn, c.clim_tx, c.clim_tn
+            FROM city_daily d
+            JOIN city_clim c ON c.city = d.city
+                            AND c.month = month(d.date)
+                            AND c.day = day(d.date)
+            WHERE d.city = ?
+            ORDER BY d.date
+            """, [city]).fetchall()
+        dates, tx, tn, clim_tx, clim_tn = map(list, zip(*rows))
 
         write_json(SITE_DATA / "cities" / f"{city}.json", {
             "city": city,
             "dates": [d.isoformat() for d in dates],
-            "tx": list(tx),
-            "tn": list(tn),
-            "clim_tx": [c[0] for c in clim],
-            "clim_tn": [c[1] for c in clim],
+            "tx": tx,
+            "tn": tn,
+            "clim_tx": clim_tx,
+            "clim_tn": clim_tn,
             # Tropical night: daily minimum stays at or above 20 °C.
             "tropical_nights_2026": sum(v >= 20.0 for v in tn),
         })

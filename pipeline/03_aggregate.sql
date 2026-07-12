@@ -21,11 +21,13 @@ FROM read_parquet('data/interim/era5/tn/*.parquet');
 -- 1991-2020 June climatology per grid cell: the "normal" June daily max
 -- that 2026 anomalies are measured against.
 -- ---------------------------------------------------------------------------
+-- Per-month normals: a July day is compared to July's climatology, not
+-- June's, so the rolling timeline stays honest across month boundaries.
 CREATE OR REPLACE TABLE climatology AS
-SELECT lat, lon, avg(temp_c) AS clim_tx
+SELECT lat, lon, month(date) AS month, avg(temp_c) AS clim_tx
 FROM tx_raw
 WHERE year(date) BETWEEN 1991 AND 2020
-GROUP BY lat, lon;
+GROUP BY lat, lon, month(date);
 
 CREATE OR REPLACE TABLE cell_region AS
 SELECT * FROM read_parquet('data/interim/cell_region.parquet');
@@ -52,7 +54,8 @@ SELECT
                 / count(*), 0)                                   AS tropical_pct
 FROM tx_raw tx
 JOIN tn_raw       tn USING (date, lat, lon)
-JOIN climatology  c  USING (lat, lon)
+JOIN climatology  c  ON c.lat = tx.lat AND c.lon = tx.lon
+                    AND c.month = month(tx.date)
 JOIN cell_region  cr USING (lat, lon)
 WHERE year(tx.date) = 2026
 GROUP BY cr.region_id, tx.date;
@@ -68,7 +71,7 @@ SELECT
     unnest(daily.time)::DATE                             AS date,
     unnest(daily.temperature_2m_max)::DOUBLE             AS tx,
     unnest(daily.temperature_2m_min)::DOUBLE             AS tn
-FROM read_json_auto('data/raw/openmeteo/*_2026-06.json', filename = true);
+FROM read_json_auto('data/raw/openmeteo/*_2026-*.json', filename = true);
 
 -- Per-city June climatology by day of month (1991-2020). The baseline files
 -- span whole years (the archive API only takes contiguous ranges), so the
@@ -80,13 +83,15 @@ WITH baseline AS (
         unnest(daily.time)::DATE                             AS date,
         unnest(daily.temperature_2m_max)::DOUBLE             AS tx,
         unnest(daily.temperature_2m_min)::DOUBLE             AS tn
-    FROM read_json_auto('data/raw/openmeteo/*_baseline_*.json', filename = true)
+    -- Match the "_all" files only, not the retired June-only baselines.
+    FROM read_json_auto('data/raw/openmeteo/*_baseline_1991-2020_all.json',
+                        filename = true)
 )
 SELECT
     city,
+    month(date)        AS month,
     day(date)          AS day,
     round(avg(tx), 1)  AS clim_tx,
     round(avg(tn), 1)  AS clim_tn
 FROM baseline
-WHERE month(date) = 6
-GROUP BY city, day(date);
+GROUP BY city, month(date), day(date);

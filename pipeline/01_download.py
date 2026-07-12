@@ -4,10 +4,12 @@
 Two sources, both cached under ``data/raw/`` so re-runs are free:
 
 * **ERA5 daily statistics** (Copernicus CDS, needs ``~/.cdsapirc``):
-  daily max/min 2 m temperature over the Europe bbox for June 2026, plus
-  June 1991-2020 for the climatological baseline. We use the post-processed
-  "daily statistics" dataset rather than hourly ERA5 — ~24x less data and no
-  local resampling step.
+  daily max/min 2 m temperature over the Europe bbox from June 2026 through
+  the newest available ERA5 day (~5 days behind real time), plus 1991-2020
+  baselines for every covered month. We use the post-processed "daily
+  statistics" dataset rather than hourly ERA5 — ~24x less data and no local
+  resampling step. The current month is re-downloaded on every run so the
+  timeline rolls forward; completed months and baselines stay cached.
 
 * **Open-Meteo historical archive** (no key, CC BY 4.0): per-city daily
   Tmax/Tmin series for the frontend detail panel.
@@ -34,8 +36,9 @@ import logging
 import os
 import sys
 import time
+from calendar import monthrange
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 log = logging.getLogger("01_download")
@@ -52,9 +55,33 @@ RAW_DIR = REPO_ROOT / "data" / "raw"
 EUROPE_BBOX = [62, -11, 35, 25]
 
 EVENT_YEAR = 2026
+EVENT_START_MONTH = 6                     # the story begins 17 June
 BASELINE_YEARS = list(range(1991, 2021))  # 1991-2020 climate normal period
-JUNE = "06"
-JUNE_DAYS = [f"{d:02d}" for d in range(1, 31)]
+
+# ERA5(T) publishes daily statistics roughly five days behind real time;
+# a one-day safety margin keeps the newest requested day always available.
+ERA5_LAG_DAYS = 6
+
+
+def latest_available_date() -> date:
+    return date.today() - timedelta(days=ERA5_LAG_DAYS)
+
+
+def event_months() -> list[tuple[str, list[str], bool]]:
+    """(month "MM", day list, is_partial) from June 2026 to the newest day.
+
+    The last tuple covers the still-accumulating current month; its jobs are
+    flagged for re-download on every run so the timeline rolls forward.
+    """
+    latest = latest_available_date()
+    months = []
+    for m in range(EVENT_START_MONTH, latest.month + 1):
+        partial = m == latest.month
+        last_day = latest.day if partial else monthrange(EVENT_YEAR, m)[1]
+        months.append((f"{m:02d}",
+                       [f"{d:02d}" for d in range(1, last_day + 1)],
+                       partial))
+    return months
 
 # CDS dataset for pre-computed daily aggregates of ERA5 single-level fields.
 # NOTE: parameter names occasionally change between CDS API versions — if a
@@ -98,6 +125,7 @@ class Job:
     target: Path         # final cached file under data/raw/
     request: dict = field(default_factory=dict)  # source-specific parameters
     est_size: str = "?"  # rough size hint shown in --dry-run
+    refresh: bool = False  # partial current month: re-download every run
 
     @property
     def cached(self) -> bool:
@@ -107,21 +135,21 @@ class Job:
 
 
 def era5_jobs() -> list[Job]:
-    """CDS requests: one file per (statistic, year).
+    """CDS requests: one file per (statistic, year, month).
 
-    The daily-statistics dataset computes aggregates on the fly, so it has a
-    tight per-request cost cap — a single 30-year baseline request comes back
-    "403: cost limits exceeded". One year per request stays under the cap
-    (it's the same size as the accepted June 2026 request), and the cache
-    makes the 62-request run resumable: re-running skips completed years.
+    One year per request because the daily-statistics dataset computes
+    aggregates on the fly and has a tight per-request cost cap — a 30-year
+    request comes back "403: cost limits exceeded". The cache makes the run
+    resumable: completed (stat, year, month) files are never re-fetched,
+    except the still-accumulating current month, which refreshes every run.
     """
-    def request(stat: str, years: list[int]) -> dict:
+    def request(stat: str, year: int, month: str, days: list[str]) -> dict:
         return {
             "product_type": "reanalysis",
             "variable": ["2m_temperature"],
-            "year": [str(y) for y in years],
-            "month": [JUNE],
-            "day": JUNE_DAYS,
+            "year": [str(year)],
+            "month": [month],
+            "day": days,
             "daily_statistic": stat,
             "time_zone": "utc+00:00",  # keep UTC so days align with ERA5 grid
             "frequency": "1_hourly",
@@ -130,24 +158,38 @@ def era5_jobs() -> list[Job]:
 
     jobs = []
     for stat, label in [("daily_maximum", "tx"), ("daily_minimum", "tn")]:
-        for year in [EVENT_YEAR, *BASELINE_YEARS]:
+        for month, event_days, partial in event_months():
             jobs.append(Job(
-                name=f"ERA5 {label.upper()} June {year}",
+                name=f"ERA5 {label.upper()} {EVENT_YEAR}-{month}",
                 source="era5",
-                target=RAW_DIR / "era5" / f"{label}_{year}-{JUNE}.nc",
-                request=request(stat, [year]),
+                target=RAW_DIR / "era5" / f"{label}_{EVENT_YEAR}-{month}.nc",
+                request=request(stat, EVENT_YEAR, month, event_days),
                 est_size="~2 MB",
+                refresh=partial,
             ))
+            for year in BASELINE_YEARS:
+                full = [f"{d:02d}"
+                        for d in range(1, monthrange(year, int(month))[1] + 1)]
+                jobs.append(Job(
+                    name=f"ERA5 {label.upper()} {year}-{month}",
+                    source="era5",
+                    target=RAW_DIR / "era5" / f"{label}_{year}-{month}.nc",
+                    request=request(stat, year, month, full),
+                    est_size="~2 MB",
+                ))
     return jobs
 
 
 def city_jobs() -> list[Job]:
-    """Open-Meteo requests: two files per city (event month + baseline).
+    """Open-Meteo requests: one file per (city, event month) plus a baseline.
 
-    The archive API only takes a contiguous date range, so the baseline pull
-    covers 1991-06-01..2020-06-30 whole; non-June rows are filtered out later
-    in DuckDB (03_aggregate.sql) — disk is cheaper than a request per year.
+    The baseline pull covers 1991-01-01..2020-12-31 whole (the archive API
+    only takes contiguous ranges), giving normals for every month the rolling
+    timeline can reach; the month filter happens in DuckDB (03_aggregate.sql).
+    The "_all" suffix distinguishes it from the retired June-only baseline
+    files, which the SQL glob no longer matches.
     """
+    latest = latest_available_date()
     jobs = []
     for city, (lat, lon) in CITIES.items():
         common = {
@@ -156,21 +198,24 @@ def city_jobs() -> list[Job]:
             "daily": "temperature_2m_max,temperature_2m_min",
             "timezone": "UTC",
         }
+        for month, days, partial in event_months():
+            end = f"{EVENT_YEAR}-{month}-{days[-1]}"
+            jobs.append(Job(
+                name=f"Open-Meteo {city} {EVENT_YEAR}-{month}",
+                source="cities",
+                target=RAW_DIR / "openmeteo" / f"{city}_{EVENT_YEAR}-{month}.json",
+                request={**common, "start_date": f"{EVENT_YEAR}-{month}-01",
+                         "end_date": end},
+                est_size="~3 kB",
+                refresh=partial,
+            ))
         jobs.append(Job(
-            name=f"Open-Meteo {city} June {EVENT_YEAR}",
+            name=f"Open-Meteo {city} 1991-2020 baseline (all months)",
             source="cities",
-            target=RAW_DIR / "openmeteo" / f"{city}_{EVENT_YEAR}-{JUNE}.json",
-            request={**common, "start_date": f"{EVENT_YEAR}-06-01",
-                     "end_date": f"{EVENT_YEAR}-06-30"},
-            est_size="~3 kB",
-        ))
-        jobs.append(Job(
-            name=f"Open-Meteo {city} 1991-2020 baseline",
-            source="cities",
-            target=RAW_DIR / "openmeteo" / f"{city}_baseline_1991-2020.json",
-            request={**common, "start_date": "1991-06-01",
-                     "end_date": "2020-06-30"},
-            est_size="~400 kB",
+            target=RAW_DIR / "openmeteo" / f"{city}_baseline_1991-2020_all.json",
+            request={**common, "start_date": "1991-01-01",
+                     "end_date": "2020-12-31"},
+            est_size="~1.5 MB",
         ))
     return jobs
 
@@ -234,10 +279,11 @@ def print_plan(jobs: list[Job]) -> None:
     width = max(len(j.name) for j in jobs)
     print(f"\nDry run — nothing will be downloaded. Cache root: {RAW_DIR}\n")
     for job in jobs:
-        status = "cached  " if job.cached else "MISSING "
+        status = ("refresh " if job.refresh
+                  else "cached  " if job.cached else "MISSING ")
         rel = job.target.relative_to(REPO_ROOT)
         print(f"  [{status}] {job.name:<{width}}  {job.est_size:>8}  {rel}")
-    missing = [j for j in jobs if not j.cached]
+    missing = [j for j in jobs if not j.cached or j.refresh]
     print(f"\n{len(jobs) - len(missing)} cached, {len(missing)} to download.")
     if any(j.source == "era5" for j in missing):
         print("ERA5 downloads need CDS credentials: "
@@ -247,7 +293,8 @@ def print_plan(jobs: list[Job]) -> None:
 
 def run(jobs: list[Job], force: bool) -> int:
     """Execute all jobs, skipping cache hits. Returns count of failures."""
-    era5_wanted = [j for j in jobs if j.source == "era5" and (force or not j.cached)]
+    era5_wanted = [j for j in jobs
+                   if j.source == "era5" and (force or j.refresh or not j.cached)]
     if era5_wanted and not cds_credentials_present():
         log.error(
             "ERA5 downloads requested but no CDS credentials found.\n"
@@ -259,7 +306,7 @@ def run(jobs: list[Job], force: bool) -> int:
     session = None
     failures = 0
     for job in jobs:
-        if job.cached and not force:
+        if job.cached and not force and not job.refresh:
             log.info("cached: %s", job.name)
             continue
         job.target.parent.mkdir(parents=True, exist_ok=True)

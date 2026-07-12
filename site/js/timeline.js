@@ -2,7 +2,8 @@
  * Autoplay advances ~2 steps/second via requestAnimationFrame (PLAN.md
  * Phase 3) and is disabled by default when the user prefers reduced motion. */
 
-const STEP_MS = 500; // 2 steps per second
+const STEP_MS = 500;        // 2 steps per second on quiet days
+const EVENT_DWELL_MS = 2600; // linger on days with facts to read
 
 const REDUCED_MOTION =
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -43,7 +44,10 @@ export function initTimeline({ dates, events, onChange }) {
 
   function tick(now) {
     if (!playing) return;
-    if (now - lastStep >= STEP_MS) {
+    // Dwell longer on dates carrying an event card, so autoplay gives the
+    // viewer time to actually read the facts before moving on.
+    const dwell = eventDates.has(dates[index]) ? EVENT_DWELL_MS : STEP_MS;
+    if (now - lastStep >= dwell) {
       lastStep = now;
       if (index >= dates.length - 1) return stop();
       setIndex(index + 1);

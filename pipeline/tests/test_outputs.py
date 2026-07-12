@@ -11,8 +11,7 @@ from pathlib import Path
 import pytest
 
 SITE_DATA = Path(__file__).resolve().parent.parent.parent / "site" / "data"
-EXPECTED_DATES = [(date(2026, 6, 17) + timedelta(days=i)).isoformat()
-                  for i in range(14)]
+TIMELINE_START = "2026-06-17"
 
 pytestmark = pytest.mark.skipif(
     not (SITE_DATA / "daily_anomaly.json").exists(),
@@ -30,14 +29,20 @@ def regions_geojson():
     return json.loads((SITE_DATA / "regions.geojson").read_text("utf-8"))
 
 
-def test_timeline_is_14_days(daily):
-    assert daily["dates"] == EXPECTED_DATES
+def test_timeline_starts_17_june_and_is_contiguous(daily):
+    """Rolling timeline: fixed start, contiguous daily steps, ≥ the original
+    14-day story, ending wherever the newest ERA5 day is."""
+    dates = [date.fromisoformat(d) for d in daily["dates"]]
+    assert dates[0].isoformat() == TIMELINE_START
+    assert len(dates) >= 14
+    assert all((b - a) == timedelta(days=1) for a, b in zip(dates, dates[1:]))
 
 
 def test_every_region_covers_every_date(daily):
+    n = len(daily["dates"])
     for rid, r in daily["regions"].items():
         for key in ("anomaly", "tx", "tx_max", "tropical"):
-            assert len(r[key]) == 14, f"{rid}.{key} incomplete"
+            assert len(r[key]) == n, f"{rid}.{key} incomplete"
 
 
 def test_no_nulls(daily):
@@ -74,9 +79,11 @@ def test_city_files_complete():
     assert len(city_files) == 12  # matches CITIES in 01_download.py
     for f in city_files:
         c = json.loads(f.read_text("utf-8"))
-        assert len(c["dates"]) == 30 and len(c["clim_tx"]) == 30
+        n = len(c["dates"])
+        assert n >= 30 and c["dates"][0] == "2026-06-01"
+        # All five arrays are aligned: one normal per 2026 date.
         for key in ("tx", "tn", "clim_tx", "clim_tn"):
-            assert len(c[key]) == 30 and None not in c[key], f"{f.name}.{key}"
+            assert len(c[key]) == n and None not in c[key], f"{f.name}.{key}"
 
 
 def test_events_have_required_fields():

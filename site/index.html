@@ -19,8 +19,11 @@
   <div id="map" aria-label="Map of Europe showing daily maximum temperature anomalies"></div>
 
   <header>
-    <h1>Anatomy of a Heatwave</h1>
-    <p>UK &amp; Europe, 17–30 June 2026 · daily max temperature anomaly vs June 1991–2020</p>
+    <h1>Anatomy of a Heatwave
+      <button id="info-btn" aria-haspopup="dialog" aria-controls="info-modal">
+        ⓘ About this map</button>
+    </h1>
+    <p id="subtitle">UK &amp; Europe, summer 2026 · daily max temperature anomaly vs 1991–2020</p>
   </header>
 
   <div id="legend" aria-hidden="true">
@@ -33,7 +36,7 @@
     <button id="panel-close" aria-label="Close panel">✕</button>
     <h2 id="panel-title"></h2>
     <p id="panel-stats"></p>
-    <h3>Daily anomaly, 17–30 June</h3>
+    <h3>Daily anomaly since 17 June</h3>
     <canvas id="region-canvas"></canvas>
     <div id="city-section" hidden>
       <h3 id="city-title"></h3>
@@ -52,14 +55,111 @@
       </div>
       <span id="date-label"></span>
     </div>
-    <div id="event-card" hidden></div>
   </div>
+
+  <!-- Event facts overlay the map so they're readable while scrubbing. -->
+  <div id="event-card" hidden></div>
 
   <footer>
     Contains modified Copernicus Climate Change Service information [2026] ·
     Weather data by <a href="https://open-meteo.com/">Open-Meteo.com</a> ·
     © EuroGeographics · <a href="attributions.html">Full attributions</a>
   </footer>
+
+  <!-- About / methodology modal -->
+  <div id="info-modal" role="dialog" aria-modal="true"
+       aria-labelledby="info-title" hidden>
+    <div class="modal-card">
+      <button id="info-close" aria-label="Close">✕</button>
+      <h2 id="info-title">About this map</h2>
+
+      <p>Each region is coloured by how far its daily maximum temperature sat
+      above or below <strong>what is normal for that place at that time of
+      year</strong>, averaged over 1991–2020. Deep red does not mean
+      &ldquo;hot&rdquo; — it means <em>hotter than summer itself normally
+      is</em>, by as much as 15–19&nbsp;°C in the worst-affected regions.
+      Scrub the timeline to watch the heatwave build, peak and break down,
+      and click any region for its daily figures against the local
+      norm.</p>
+
+      <p>The purpose of this visualisation is specific: it shows the
+      <strong>severity of temperature extremes within a single season</strong>,
+      not gradual average warming. A warming climate does not simply nudge
+      every day a degree or two upward — it disproportionately inflates the
+      extremes, making events that were once vanishingly rare arrive harder
+      and more often. Heat is the clearest example, but the same physics
+      amplifies other extremes too: longer droughts, heavier rainfall and
+      flooding, and — through a destabilised jet stream — even severe cold
+      outbreaks. This map documents one such extreme in detail.</p>
+
+      <h3>&ldquo;It&rsquo;s summer — of course it&rsquo;s hot.&rdquo;</h3>
+      <p>The comparison already accounts for that. Every value here is
+      measured against the 1991–2020 average <em>for the same region and
+      time of year</em> — against what summer normally delivers. What you
+      are seeing is the excess above summer itself.</p>
+
+      <h3>&ldquo;There have always been heatwaves — 1976 was extreme
+      too.&rdquo;</h3>
+      <p>Individual heatwaves are indeed as old as weather, and 1976 was
+      exceptional for its time. The question science asks is not whether
+      heatwaves happen, but whether their frequency, intensity and extent
+      are changing — and on that, the trend data are unambiguous: events of
+      a given severity now recur far more often, and new records are set by
+      larger margins, across a larger area. Rapid attribution studies (such
+      as those by World Weather Attribution) estimate specifically how much
+      more likely climate change made an individual event like this one.</p>
+
+      <h3>&ldquo;One hot season proves nothing about climate.&rdquo;</h3>
+      <p>Correct — and this map does not claim otherwise. A single season is
+      weather. This visualisation <em>describes</em> one event precisely;
+      the climate context comes from decades of observations and the
+      attribution literature, not from this map alone. The two together are
+      the point: this is what the statistics look like when they arrive in
+      one place, in one month.</p>
+
+      <h3>&ldquo;Is this real data or a model?&rdquo;</h3>
+      <p>Both, deliberately. The gridded values are from ERA5, the European
+      reanalysis, which blends millions of quality-controlled observations —
+      weather stations, ships, aircraft, satellites — with a physics model
+      to produce a consistent record across the whole continent. Because
+      each grid cell averages ~31&nbsp;km, local peaks are smoothed:
+      station records (like the 44.3&nbsp;°C at Pissos) typically
+      <em>exceed</em> the values mapped here. In other words, this map is
+      conservative. National records shown in event markers are labelled
+      provisional until formally verified by the relevant weather
+      services.</p>
+
+      <h3>&ldquo;Aren&rsquo;t thermometers just measuring urban heat?&rdquo;</h3>
+      <p>Urban heat islands are real but cannot explain what you see here:
+      these are region-scale averages spanning countryside, coast and
+      mountains, not city-centre thermometers — and the reanalysis grid is
+      far coarser than any urban footprint. The anomaly pattern sweeps
+      across rural France and the North Sea coast just as it does across
+      cities.</p>
+
+      <h3>&ldquo;Why compare against 1991–2020?&rdquo;</h3>
+      <p>It is the current World Meteorological Organization standard
+      reference period. Note that it is itself the warmest normal period on
+      record — measured against the older 1961–1990 baseline, every anomaly
+      on this map would be <em>larger</em>. The choice here is the
+      conservative one.</p>
+
+      <h3>&ldquo;Cold records still happen — doesn&rsquo;t that disprove
+      warming?&rdquo;</h3>
+      <p>No — it is expected. Warming shifts the whole temperature
+      distribution while weather keeps its variability, so cold extremes
+      still occur; they just become rarer while hot extremes become more
+      frequent. The ratio of new hot records to new cold records has been
+      widening for decades, which is precisely the fingerprint of a shifting
+      distribution rather than a constant climate.</p>
+
+      <p class="modal-foot">Data: ERA5 (Copernicus/ECMWF), Open-Meteo,
+      Eurostat/GISCO boundaries — see
+      <a href="attributions.html">full attributions and licences</a>.
+      Built as an open, reproducible pipeline; the aggregation code and this
+      site&rsquo;s source are public.</p>
+    </div>
+  </div>
 
   <!-- Wait for the deferred MapLibre script, then boot the module app. -->
   <script type="module">
