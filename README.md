@@ -41,7 +41,7 @@ skips anything already present (use `--force` to re-download).
 
 ## One-time GitHub setup (run these yourself)
 
-From this directory, with the [gh CLI](https://cli.github.com) logged in:
+From this directory with the [gh CLI](https://cli.github.com) logged in:
 
 ```bash
 git init -b main
